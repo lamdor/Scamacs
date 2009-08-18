@@ -16,7 +16,7 @@
 (defconst sbt-copyright    "Copyright (C) 2008 Raymond Paul Racine")
 (defconst sbt-copyright-2  "Portions Copyright (C) Free Software Foundation")
 
-(defconst sbt-version      "0.021")
+(defconst sbt-version      "0.022")
 (defconst sbt-author-name  "Raymond Racine")
 (defconst sbt-author-email "ray.racine@gamail.com")
 
@@ -59,14 +59,8 @@ see the file `COPYING'.  If not, write to the Free Software Foundation, Inc.,
   (interactive)
   (with-current-buffer (sbt-build-buffer-name nil)
     (let ((inhibit-read-only t))
-      (erase-buffer))))
-
-;; set to nil as could be causing a problem
-(set 'compilation-auto-jump-to-first-error nil)
-
-(ansi-color-for-comint-mode-on)
-
-;; Locate the project root directory from the source buffer location.
+      (erase-buffer)
+      (comint-send-input))))
 
 (defun sbt-project-dir-p (path)
   "Does a project/build.properties exists in the given path."
@@ -80,8 +74,6 @@ see the file `COPYING'.  If not, write to the Free Software Foundation, Inc.,
   "The parent path for the given path."
   (file-truename (concat path "/..")))
 
-;; Search up the directory tree until directory with a "project" subdir 
-;; is found with build.properties
 (defun sbt-find-path-to-project ()
   "Move up the directory tree for the current buffer until root or a directory with a project/build.properties is found."
   (interactive)
@@ -101,3 +93,5 @@ see the file `COPYING'.  If not, write to the Free Software Foundation, Inc.,
 	  path
 	parent-path))))
 	
+(set 'compilation-auto-jump-to-first-error t)
+(ansi-color-for-comint-mode-on)
