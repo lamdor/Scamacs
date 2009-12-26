@@ -55,7 +55,7 @@
   :group 'scala)
 
 (defun scala-parse-partial-sexp ()
-    (parse-partial-sexp (point-min) (point)))
+  (parse-partial-sexp (point-min) (point)))
 
 (defun scala-in-comment-p ()
   "Return t iff the point is inside a comment."
@@ -180,13 +180,6 @@
 	       (scala-backward-spaces))
 	     (scala-looking-at-backward scala-expr-start-re)))
 	 (+ (current-indentation) scala-mode-indent:step))))
-
-;; (defun scala-match-block-p (block-start)
-;;   "Find and position to the appropriate enlosing block to indent from."
-;;   (save-excursion
-;;     (goto-char block-start)
-;;     (scala-backward-spaces)
-;;     (scala-looking-at-backward "match")))
 
 (defun scala-indenting-case-line-p ()
   (beginning-of-line)
