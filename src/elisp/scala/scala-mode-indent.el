@@ -118,7 +118,8 @@
     (current-column)))
 
 (defun crawl-back-to-template ()
-  (if (looking-at "extends")
+  (if (or (looking-at "extends")
+	  (eq (char-before ?\))))
       (backward-sexp)
     (backward-word))
   (cond 
