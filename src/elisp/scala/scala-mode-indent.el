@@ -103,9 +103,18 @@
     (or (and (scala-in-comment-p)
              (not (= (char-after) ?\/))
              (scala-comment-indentation))
-        (scala-indentation-from-following)
-	(scala-indentation-from-preceding)
-	(scala-indentation-from-block)
+        (let ((indent (scala-indentation-from-following)))
+	  (print "F")
+	  (print indent)
+	  indent)
+	(let ((indent (scala-indentation-from-preceding)))
+	  (print "P")
+	  (print indent)
+	  indent)
+	(let ((block (scala-indentation-from-block)))
+	  (print "Block indent")
+	  (print block)
+	  block)
         0)))
 
 (defun scala-comment-indentation ()
@@ -129,19 +138,40 @@
     (crawl-back-to-template))
    (t nil)))
 
-(defun scala-block-indentation ()
+;; assumes one point to right of nearest opening block 
+(defun scala-mode-match-block-p ()
+  (save-excursion
+    (backward-word)
+    (looking-at "match")))
+
+;; assumes one point to right of nearest opening block 
+(defun scala-block-indentation (&optional case-or-eob)
   (let ((cpos (point))
 	(block-start-eol (scala-point-after (end-of-line)))
         (block-after-spc (scala-point-after (scala-forward-spaces))))
-    (if (> block-after-spc block-start-eol)  ;; simple block open {	
-	(progn 
-	  (crawl-back-to-template) ;; class,trait,object crawl to template start
-	  (+ (current-indentation) scala-mode-indent:step))
+    (print "BLOCK")
+    (print cpos)
+    (if (> block-after-spc block-start-eol)  ;; simple block open {
+	(if (scala-mode-match-block-p)
+	    (if case-or-eob
+		(+ (current-indentation) scala-mode-indent:step)
+	      (+ (current-indentation) (* 2 scala-mode-indent:step)))
+	  (progn 
+	    (print "bgtre")
+	    (crawl-back-to-template)         ;; class,trait,object crawl to template start
+	    (print (point))
+	    (+ (current-indentation) scala-mode-indent:step)))
       (progn                                 ;; block open with stuff { ...
 	(goto-char cpos)
 	(if (search-forward "=>" block-start-eol t)
-	    (+ (current-indentation) scala-mode-indent:step)
+	    (progn
+	      (print "=>")
+	      (print (point))
+	      ;;(if case-or-eob
+		  (+ (current-indentation) scala-mode-indent:step))
+		;;(current-indentation)))
 	  (progn
+	    (print "CC")
 	    (scala-forward-spaces)        
 	    (current-column)))))))
 
@@ -155,7 +185,7 @@
      ((= (char-syntax (char-after)) ?\))
       (let ((parse-sexp-ignore-comments t))
         (goto-char (1+ (scan-sexps (1+ (point)) -1)))
-      (- (scala-block-indentation) scala-mode-indent:step)))
+	(- (scala-block-indentation t) scala-mode-indent:step)))
      ((looking-at scala-expr-middle-re)
       ;; [...] this is a somewhat of a hack.
       (let ((matching-kw (cdr (assoc (match-string-no-properties 0)
@@ -181,6 +211,7 @@
 	     (scala-looking-at-backward scala-expr-start-re)))
 	 (+ (current-indentation) scala-mode-indent:step))))
 
+;; assumes point is 
 (defun scala-indenting-case-line-p ()
   (beginning-of-line)
   (scala-forward-spaces)
@@ -196,10 +227,7 @@
           0
 	(progn
 	  (goto-char (1+ block-start))
-	  (let ((indent (scala-block-indentation)))
-	    (if am-case
-		(max 0 (- indent scala-mode-indent:step))
-	      indent)))))))
+	  (scala-block-indentation am-case))))))
 
 (defun scala-indent-line-to (column)
   "Indent current line to COLUMN and perhaps move point.
@@ -209,10 +237,6 @@ not move."
   (if (<= (current-column) (current-indentation))
       (indent-line-to column)
     (save-excursion (indent-line-to column))))
-
-(defun scala-indenting-case-p ()
-  (scala-forward-spaces)
-  (looking-at "case"))
 
 (defun scala-indent-line ()
   "Indent current line as smartly as possible.
