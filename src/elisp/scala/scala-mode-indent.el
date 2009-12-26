@@ -103,18 +103,9 @@
     (or (and (scala-in-comment-p)
              (not (= (char-after) ?\/))
              (scala-comment-indentation))
-        (let ((indent (scala-indentation-from-following)))
-	  (print "F")
-	  (print indent)
-	  indent)
-	(let ((indent (scala-indentation-from-preceding)))
-	  (print "P")
-	  (print indent)
-	  indent)
-	(let ((block (scala-indentation-from-block)))
-	  (print "Block indent")
-	  (print block)
-	  block)
+        (scala-indentation-from-following)
+	(scala-indentation-from-preceding)
+	(scala-indentation-from-block)
         0)))
 
 (defun scala-comment-indentation ()
@@ -149,30 +140,20 @@
   (let ((cpos (point))
 	(block-start-eol (scala-point-after (end-of-line)))
         (block-after-spc (scala-point-after (scala-forward-spaces))))
-    (print "BLOCK")
-    (print cpos)
     (if (> block-after-spc block-start-eol)  ;; simple block open {
 	(if (scala-mode-match-block-p)
 	    (if case-or-eob
 		(+ (current-indentation) scala-mode-indent:step)
 	      (+ (current-indentation) (* 2 scala-mode-indent:step)))
-	  (progn 
-	    (print "bgtre")
+	  (progn                             ;; properly indent first line after template 
 	    (crawl-back-to-template)         ;; class,trait,object crawl to template start
-	    (print (point))
 	    (+ (current-indentation) scala-mode-indent:step)))
       (progn                                 ;; block open with stuff { ...
 	(goto-char cpos)
 	(if (search-forward "=>" block-start-eol t)
-	    (progn
-	      (print "=>")
-	      (print (point))
-	      ;;(if case-or-eob
-		  (+ (current-indentation) scala-mode-indent:step))
-		;;(current-indentation)))
-	  (progn
-	    (print "CC")
-	    (scala-forward-spaces)        
+	    (+ (current-indentation) scala-mode-indent:step)
+	  (progn                            ;; properly indent mulitline args in a template
+	    (scala-forward-spaces)
 	    (current-column)))))))
 
 (defun scala-indentation-from-following ()
