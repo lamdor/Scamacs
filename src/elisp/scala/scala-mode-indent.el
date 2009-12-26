@@ -119,7 +119,7 @@
 
 (defun crawl-back-to-template ()
   (if (or (looking-at "extends")
-	  (eq (char-before ?\))))
+	  (eq (char-before) ?\)))
       (backward-sexp)
     (backward-word))
   (cond 
@@ -131,10 +131,10 @@
    (t nil)))
 
 ;; assumes one point to right of nearest opening block 
-(defun scala-mode-match-block-p ()
+(defun scala-mode-match-catch-block-p ()
   (save-excursion
     (backward-word)
-    (looking-at "match")))
+    (looking-at "match\\|catch")))
 
 ;; assumes one point to right of nearest opening block 
 (defun scala-block-indentation (&optional case-or-eob)
@@ -142,12 +142,16 @@
 	(block-start-eol (scala-point-after (end-of-line)))
         (block-after-spc (scala-point-after (scala-forward-spaces))))
     (if (> block-after-spc block-start-eol)  ;; simple block open {
-	(if (scala-mode-match-block-p)
-	    (if case-or-eob
-		(+ (current-indentation) scala-mode-indent:step)
-	      (+ (current-indentation) (* 2 scala-mode-indent:step)))
+	(if (scala-mode-match-catch-block-p)
+	    (progn
+	      (if case-or-eob
+		  (+ (current-indentation) scala-mode-indent:step)
+		(+ (current-indentation) (* 2 scala-mode-indent:step))))
 	  (progn                             ;; properly indent first line after template 
-	    (crawl-back-to-template)         ;; class,trait,object crawl to template start
+	    (backward-char)                  ;; on the '{'
+	    (scala-backward-spaces)          
+	    (unless (crawl-back-to-template)         ;; class,trait,object crawl to template start
+		(goto-char cpos))
 	    (+ (current-indentation) scala-mode-indent:step)))
       (progn                                 ;; block open with stuff { ...
 	(goto-char cpos)
@@ -182,22 +186,28 @@
   ;; Return suggested indentation based on the preceding part of the
   ;; current expression. Return nil if indentation cannot be guessed.
   (save-excursion
-    (scala-backward-spaces)
-    (and (not (bobp))
-	 (if (eq (char-syntax (char-before)) ?\()
-	     (scala-block-indentation)
-	   (progn
-	     (when (eq (char-before) ?\))
-	       (backward-sexp)
-	       (scala-backward-spaces))
-	     (scala-looking-at-backward scala-expr-start-re)))
-	 (+ (current-indentation) scala-mode-indent:step))))
+    (let ((am-case (scala-indenting-case-line-p)))
+      (scala-backward-spaces)
+      (when (not (bobp))
+	(cond
+	 ((eq (char-syntax (char-before)) ?\()
+	  (scala-block-indentation am-case))
+	 ((eq (char-before) ?\=)
+	  (backward-sexp)
+	  (+ (current-indentation) scala-mode-indent:step))
+	 ((progn 
+	    (when (eq (char-before) ?\))
+	      (backward-sexp)
+	      (scala-backward-spaces))
+	    (scala-looking-at-backward scala-expr-start-re))
+	  (+ (current-indentation) scala-mode-indent:step))
+	 (t nil))))))
 
-;; assumes point is 
 (defun scala-indenting-case-line-p ()
-  (beginning-of-line)
-  (scala-forward-spaces)
-  (looking-at "case"))
+  (save-excursion
+    (beginning-of-line)
+    (scala-forward-spaces)
+    (looking-at "case")))
 
 (defun scala-indentation-from-block ()
   ;; Return suggested indentation based on the current block.
