@@ -130,11 +130,15 @@
     (crawl-back-to-template))
    (t nil)))
 
-;; assumes one point to right of nearest opening block 
+;; assumes one point to right of nearest opening block
+;; Oops we can case inside a block, no match required.
+;; and no keyword is required.  Witness Actor's receive method.
+;; Instead of looking for match|catch|receive|... which could be now anything
+;; See if the FIRST word within the opening block is a case.
 (defun scala-mode-match-catch-block-p ()
   (save-excursion
     (backward-word)
-    (looking-at "match\\|catch")))
+    (looking-at "match\\|catch\\|receive\\|react")))
 
 ;; assumes one point to right of nearest opening block 
 (defun scala-block-indentation (&optional case-or-eob)
