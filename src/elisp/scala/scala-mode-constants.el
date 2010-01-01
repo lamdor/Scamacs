@@ -193,7 +193,7 @@ reserved keywords when used alone.")
 (defconst scala-expr-start-re
   (concat
    (regexp-opt '("if" "else" "for" "do" "yield") 'words) "\\|"
-   (regexp-opt '("=" "=>") t)))
+   (regexp-opt '("=>") t)))
 
 (defconst scala-expr-starter
   (mapcar (lambda (pair) (cons (car pair) (concat "\\<" (cdr pair) "\\>")))
