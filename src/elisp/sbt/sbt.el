@@ -37,7 +37,7 @@ see the file `COPYING'.  If not, write to the Free Software Foundation, Inc.,
   :group  'sbt
   :prefix "sbt-")
 
-(defcustom sbt-program-name "xsbt"
+(defcustom sbt-program-name "sbt"
   "Program invoked by the `run-sbt' command."
   :type 'string
   :group 'sbt)
@@ -96,16 +96,6 @@ see the file `COPYING'.  If not, write to the Free Software Foundation, Inc.,
     (local-set-key (kbd "C-c C-a") 'sbt-switch)
     (compilation-shell-minor-mode t)
     (comint-send-string buffer (concat "cd " root-path "\n xsbt\n"))))
-
-;; (defun sbt-shell ()
-;;  "Launch the sbt shell."
-;;  (interactive)
-;;  (let ((compilation-buffer-name-function 'sbt-build-buffer-name))
-;;    (compile (concat "cd " (sbt-find-path-to-parent-project) "; sbt") t)
-;;    (pop-to-buffer (sbt-build-buffer-name nil))
-;;    (make-local-variable 'comint-prompt-read-only)
-;;    (set 'comint-prompt-read-only t)
-;;    (goto-char (point-max))))
 
 (defun sbt-switch ()
   "Switch to the sbt shell (create if necessary) if or if already there, back"
